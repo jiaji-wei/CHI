@@ -2,44 +2,29 @@
 
 pragma solidity ^0.7.6;
 
-import "@openzeppelin/contracts/math/Math.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/EnumerableSet.sol";
-import "@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol";
-import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
-import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
+import '@openzeppelin/contracts/math/Math.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import '@openzeppelin/contracts/utils/EnumerableSet.sol';
+import '@uniswap/v3-core/contracts/interfaces/callback/IUniswapV3MintCallback.sol';
+import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
+import '@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol';
 
-
-import "./interfaces/ICHIManager.sol";
-import "./interfaces/ICHIDepositCallBack.sol";
+import './interfaces/ICHIManager.sol';
+import './interfaces/ICHIDepositCallBack.sol';
 
 contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    event Deposit(
-        uint256 indexed yangId,
-        uint256 shares,
-        uint256 amount0,
-        uint256 amount1
-    );
+    event Deposit(uint256 indexed yangId, uint256 shares, uint256 amount0, uint256 amount1);
 
-    event Withdraw(
-        uint256 indexed yangId,
-        address indexed to,
-        uint256 shares,
-        uint256 amount0,
-        uint256 amount1
-    );
+    event Withdraw(uint256 indexed yangId, address indexed to, uint256 shares, uint256 amount0, uint256 amount1);
 
-    event CollectFee(
-        uint256 feesFromPool0,
-        uint256 feesFromPool1
-    );
+    event CollectFee(uint256 feesFromPool0, uint256 feesFromPool1);
 
     IUniswapV3Pool public pool;
     ICHIManager public CHIManager;
@@ -58,7 +43,6 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
 
     using EnumerableSet for EnumerableSet.UintSet;
     EnumerableSet.UintSet private _rangeSet;
-    
 
     constructor(
         address _pool,
@@ -71,14 +55,14 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         tickSpacing = pool.tickSpacing();
 
         CHIManager = ICHIManager(_manager);
-    
+
         _protocolFee = _protocolFee_;
 
-        require(_protocolFee < FEE_BASE, "f");
+        require(_protocolFee < FEE_BASE, 'f');
     }
 
     modifier onlyManager {
-        require(msg.sender == address(CHIManager), "m");
+        require(msg.sender == address(CHIManager), 'm');
         _;
     }
 
@@ -98,7 +82,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         return _totalSupply;
     }
 
-    function getRangeCount() external view virtual override returns (uint) {
+    function getRangeCount() external view virtual override returns (uint256) {
         return _rangeSet.length();
     }
 
@@ -117,21 +101,21 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
 
     function addRange(int24 tickLower, int24 tickUpper) external override onlyManager {
         (uint256 amount0, uint256 amount1) = _positionAmounts(tickLower, tickUpper);
-        require(amount0 == 0 , "a0");
-        require(amount1 == 0 , "a0");
+        require(amount0 == 0, 'a0');
+        require(amount1 == 0, 'a0');
         _checkTicks(tickLower, tickUpper);
         _rangeSet.add(_encode(tickLower, tickUpper));
     }
 
     function removeRange(int24 tickLower, int24 tickUpper) external override onlyManager {
         (uint256 amount0, uint256 amount1) = _positionAmounts(tickLower, tickUpper);
-        require(amount0 == 0 , "a0");
-        require(amount1 == 0 , "a0");
+        require(amount0 == 0, 'a0');
+        require(amount1 == 0, 'a0');
         _rangeSet.remove(_encode(tickLower, tickUpper));
     }
 
     function getTotalAmounts() public view override returns (uint256 total0, uint256 total1) {
-        for (uint256 i = 0; i < _rangeSet.length() ; i++) {
+        for (uint256 i = 0; i < _rangeSet.length(); i++) {
             (int24 _tickLower, int24 _tickUpper) = _decode(_rangeSet.at(i));
             (uint256 amount0, uint256 amount1) = _positionAmounts(_tickLower, _tickUpper);
             total0 = total0.add(amount0);
@@ -140,7 +124,6 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         total0 = total0.add(_balanceToken0());
         total1 = total1.add(_balanceToken1());
     }
-
 
     function deposit(
         uint256 yangId,
@@ -159,15 +142,15 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
             uint256 amount1
         )
     {
-        require(amount0Desired > 0 || amount1Desired > 0, "a0a1");
+        require(amount0Desired > 0 || amount1Desired > 0, 'a0a1');
 
         // update pool
         _updateLiquidity();
 
         (shares, amount0, amount1) = _calcSharesAndAmounts(amount0Desired, amount1Desired);
-        require(shares > 0, "s");
-        require(amount0 >= amount0Min, "A0M");
-        require(amount1 >= amount1Min, "A1M");
+        require(shares > 0, 's');
+        require(amount0 >= amount0Min, 'A0M');
+        require(amount1 >= amount1Min, 'A1M');
 
         // Pull in tokens from sender
         ICHIDepositCallBack(msg.sender).CHIDepositCallback(token0, amount0, token1, amount1);
@@ -183,8 +166,8 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         uint256 amount1Min,
         address to
     ) external override nonReentrant onlyManager returns (uint256 amount0, uint256 amount1) {
-        require(shares > 0, "s");
-        require(to != address(0) && to != address(this), "to");
+        require(shares > 0, 's');
+        require(to != address(0) && to != address(this), 'to');
 
         (uint256 removeAmount0, uint256 removeAmount1) = _burnMultLiquidityShare(shares, to);
 
@@ -196,8 +179,8 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         // Sum up total amounts sent to recipient
         amount0 = removeAmount0.add(unusedAmount0);
         amount1 = removeAmount1.add(unusedAmount1);
-        require(amount0 >= amount0Min, "A0M");
-        require(amount1 >= amount1Min, "A1M");
+        require(amount0 >= amount0Min, 'A0M');
+        require(amount1 >= amount1Min, 'A1M');
 
         // Burn shares
         _burn(shares);
@@ -249,7 +232,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
             shares = amount0.mul(_totalSupply).div(total0);
         } else {
             uint256 cross = Math.min(amount0Desired.mul(total1), amount1Desired.mul(total0));
-            require(cross > 0, "c");
+            require(cross > 0, 'c');
 
             // Round up amounts
             amount0 = cross.sub(1).div(total1).add(1);
@@ -261,7 +244,9 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
     function harvestFee() external override nonReentrant {
         uint256 collect0 = 0;
         uint256 collect1 = 0;
-        for (uint256 i = 0; i < _rangeSet.length() ; i++) {
+        // update pool
+        _updateLiquidity();
+        for (uint256 i = 0; i < _rangeSet.length(); i++) {
             (int24 _tickLower, int24 _tickUpper) = _decode(_rangeSet.at(i));
             (uint256 _collect0, uint256 _collect1) = _collet(_tickLower, _tickUpper);
             collect0 = collect0.add(_collect0);
@@ -288,50 +273,70 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
     ) external override nonReentrant onlyManager {
         (int24 _tickLower, int24 _tickUpper) = _decode(_rangeSet.at(rangeIndex));
 
-        require(amount0Desired <= _balanceToken0(), "IB0");
-        require(amount1Desired <= _balanceToken1(), "IB1");
+        require(amount0Desired <= _balanceToken0(), 'IB0');
+        require(amount1Desired <= _balanceToken1(), 'IB1');
 
         // Place order on UniswapV3
         uint128 liquidity = _liquidityForAmounts(_tickLower, _tickUpper, amount0Desired, amount1Desired);
         if (liquidity > 0) {
-            pool.mint(address(this), _tickLower, _tickUpper, liquidity, "");
+            pool.mint(address(this), _tickLower, _tickUpper, liquidity, new bytes(0));
         }
     }
 
-    function removeLiquidityFromPosition(
-        uint256 rangeIndex,
-        uint128 liquidity
-    ) external override nonReentrant onlyManager {
+    function removeLiquidityFromPosition(uint256 rangeIndex, uint128 liquidity)
+        external
+        override
+        nonReentrant
+        onlyManager
+        returns (uint256 amount0, uint256 amount1)
+    {
         (int24 _tickLower, int24 _tickUpper) = _decode(_rangeSet.at(rangeIndex));
 
-        require(liquidity <= _positionLiquidity(_tickLower, _tickUpper), "L");
+        require(liquidity <= _positionLiquidity(_tickLower, _tickUpper), 'L');
 
         if (liquidity > 0) {
-            pool.burn(_tickLower, _tickUpper, liquidity);
+            (amount0, amount1) = pool.burn(_tickLower, _tickUpper, liquidity);
+
+            if (amount0 > 0 || amount1 > 0) {
+                (amount0, amount1) = pool.collect(
+                    address(this),
+                    _tickLower,
+                    _tickUpper,
+                    toUint128(amount0),
+                    toUint128(amount1)
+                );
+            }
         }
     }
 
-    function removeAllLiquidityFromPosition(
-        uint256 rangeIndex
-    ) external override nonReentrant onlyManager {
+    function removeAllLiquidityFromPosition(uint256 rangeIndex)
+        external
+        override
+        nonReentrant
+        onlyManager
+        returns (uint256 amount0, uint256 amount1)
+    {
         (int24 _tickLower, int24 _tickUpper) = _decode(_rangeSet.at(rangeIndex));
         uint128 liquidity = _positionLiquidity(_tickLower, _tickUpper);
         if (liquidity > 0) {
-            pool.burn(_tickLower, _tickUpper, liquidity);
+            (amount0, amount1) = pool.burn(_tickLower, _tickUpper, liquidity);
+
+            if (amount0 > 0 || amount1 > 0) {
+                (amount0, amount1) = pool.collect(
+                    address(this),
+                    _tickLower,
+                    _tickUpper,
+                    toUint128(amount0),
+                    toUint128(amount1)
+                );
+            }
         }
     }
 
     function _collet(int24 tickLower, int24 tickUpper) internal returns (uint256 collect0, uint256 collect1) {
         bytes32 positionKey = keccak256(abi.encodePacked(address(this), tickLower, tickUpper));
         (, , , uint128 tokensOwed0, uint128 tokensOwed1) = pool.positions(positionKey);
-        (collect0, collect1) =
-            pool.collect(
-                address(this),
-                tickLower,
-                tickUpper,
-                tokensOwed0,
-                tokensOwed1
-            );
+        (collect0, collect1) = pool.collect(address(this), tickLower, tickUpper, tokensOwed0, tokensOwed1);
         uint256 feesToProtocol0 = 0;
         uint256 feesToProtocol1 = 0;
 
@@ -363,11 +368,11 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
     ) internal view returns (uint256 amount0, uint256 amount1) {
         (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
         (amount0, amount1) = LiquidityAmounts.getAmountsForLiquidity(
-                                sqrtRatioX96,
-                                TickMath.getSqrtRatioAtTick(tickLower),
-                                TickMath.getSqrtRatioAtTick(tickUpper),
-                                liquidity
-                            );
+            sqrtRatioX96,
+            TickMath.getSqrtRatioAtTick(tickLower),
+            TickMath.getSqrtRatioAtTick(tickUpper),
+            liquidity
+        );
     }
 
     function _liquidityForAmounts(
@@ -378,24 +383,24 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
     ) internal view returns (uint128 liquidity) {
         (uint160 sqrtRatioX96, , , , , , ) = pool.slot0();
         liquidity = LiquidityAmounts.getLiquidityForAmounts(
-                        sqrtRatioX96,
-                        TickMath.getSqrtRatioAtTick(tickLower),
-                        TickMath.getSqrtRatioAtTick(tickUpper),
-                        amount0,
-                        amount1
-                    );
+            sqrtRatioX96,
+            TickMath.getSqrtRatioAtTick(tickLower),
+            TickMath.getSqrtRatioAtTick(tickUpper),
+            amount0,
+            amount1
+        );
     }
 
     function _checkTicks(int24 tickLower, int24 tickUpper) private view {
         require(tickLower < tickUpper, 'TLU');
         require(tickLower >= TickMath.MIN_TICK, 'TLM');
         require(tickUpper <= TickMath.MAX_TICK, 'TUM');
-        require(tickLower % tickSpacing == 0, "TLF");
-        require(tickUpper % tickSpacing == 0, "TUF");
+        require(tickLower % tickSpacing == 0, 'TLF');
+        require(tickUpper % tickSpacing == 0, 'TUF');
     }
 
     function _updateLiquidity() internal {
-        for (uint256 i = 0; i < _rangeSet.length() ; i++) {
+        for (uint256 i = 0; i < _rangeSet.length(); i++) {
             (int24 _tickLower, int24 _tickUpper) = _decode(_rangeSet.at(i));
             if (_positionLiquidity(_tickLower, _tickUpper) > 0) {
                 pool.burn(_tickLower, _tickUpper, 0);
@@ -404,7 +409,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
     }
 
     function _burnMultLiquidityShare(uint256 shares, address to) internal returns (uint256 total0, uint256 total1) {
-        for (uint256 i = 0; i < _rangeSet.length() ; i++) {
+        for (uint256 i = 0; i < _rangeSet.length(); i++) {
             (int24 _tickLower, int24 _tickUpper) = _decode(_rangeSet.at(i));
             if (_positionLiquidity(_tickLower, _tickUpper) > 0) {
                 (uint256 amount0, uint256 amount1) = _burnLiquidityShare(_tickLower, _tickUpper, shares, to);
@@ -427,13 +432,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
             (amount0, amount1) = pool.burn(tickLower, tickUpper, liquidity);
 
             if (amount0 > 0 || amount1 > 0) {
-                (amount0, amount1) = pool.collect(
-                    to,
-                    tickLower,
-                    tickUpper,
-                    toUint128(amount0),
-                    toUint128(amount1)
-                );
+                (amount0, amount1) = pool.collect(to, tickLower, tickUpper, toUint128(amount0), toUint128(amount1));
             }
         }
     }
@@ -443,16 +442,11 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
     }
 
     /// @dev Get position liquidity
-    function _positionLiquidity(int24 tickLower, int24 tickUpper)
-        internal
-        view
-        returns (uint128 liquidity)
-    {
+    function _positionLiquidity(int24 tickLower, int24 tickUpper) internal view returns (uint128 liquidity) {
         bytes32 positionKey = keccak256(abi.encodePacked(address(this), tickLower, tickUpper));
         (liquidity, , , , ) = pool.positions(positionKey);
     }
 
-    
     /// @dev Increasing the total supply.
     function _mint(uint256 amount) internal {
         _totalSupply += amount;

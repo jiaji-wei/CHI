@@ -3,8 +3,11 @@ pragma solidity ^0.7.6;
 
 interface ICHIVaultDeployer {
     function owner() external view returns (address);
+
     function CHIManager() external view returns (address);
+
     function setOwner(address _owner) external;
+
     function setCHIManager(address _manager) external;
 
     function createVault(

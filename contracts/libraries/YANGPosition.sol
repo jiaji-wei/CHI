@@ -14,5 +14,4 @@ library YANGPosition {
     ) internal view returns (YANGPosition.Info storage position) {
         position = self[keccak256(abi.encodePacked(yangId, chiId))];
     }
-
 }
