@@ -23,7 +23,7 @@ interface ICHIVault {
 
     function getTotalAmounts() external view returns (uint256 amount0, uint256 amount1);
 
-    function harvestFee() external;
+    function harvestFee() public;
 
     function collectProtocol(
         uint256 amount0,

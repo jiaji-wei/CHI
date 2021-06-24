@@ -171,6 +171,8 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
 
         (uint256 removeAmount0, uint256 removeAmount1) = _burnMultLiquidityShare(shares, to);
 
+        // collect fee
+        harvestFee();
         uint256 unusedAmount0 = _balanceToken0().mul(shares).div(_totalSupply);
         uint256 unusedAmount1 = _balanceToken1().mul(shares).div(_totalSupply);
         if (unusedAmount0 > 0) token0.safeTransfer(to, unusedAmount0);
@@ -241,7 +243,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         }
     }
 
-    function harvestFee() external override nonReentrant {
+    function harvestFee() public override nonReentrant {
         uint256 collect0 = 0;
         uint256 collect1 = 0;
         // update pool
