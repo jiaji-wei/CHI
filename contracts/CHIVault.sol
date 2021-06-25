@@ -243,7 +243,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         }
     }
 
-    function harvestFee() public override nonReentrant {
+    function harvestFee() public {
         uint256 collect0 = 0;
         uint256 collect1 = 0;
         // update pool
