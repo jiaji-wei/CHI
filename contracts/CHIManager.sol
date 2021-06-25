@@ -214,6 +214,20 @@ contract CHIManager is ICHIManager, ReentrancyGuard, ERC721, Multicall {
         ICHIVault(_chi_.vault).removeRange(tickLower, tickUpper);
     }
 
+    function addAndRemoveRanges(
+        uint256 tokenId,
+        RangeParams[] calldata addRanges,
+        RangeParams[] calldata removeRanges
+    ) external override isAuthorizedForToken(tokenId) {
+        CHIData storage _chi_ = _chi[tokenId];
+        for (uint256 i = 0; i < addRanges.length; i++) {
+            ICHIVault(_chi_.vault).addRange(addRanges[i].tickLower, addRanges[i].tickUpper);
+        }
+        for (uint256 i = 0; i < removeRanges.length; i++) {
+            ICHIVault(_chi_.vault).removeRange(removeRanges[i].tickLower, removeRanges[i].tickUpper);
+        }
+    }
+
     function collectProtocol(
         uint256 tokenId,
         uint256 amount0,

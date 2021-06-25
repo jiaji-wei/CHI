@@ -14,6 +14,11 @@ interface ICHIManager is ICHIDepositCallBack {
         uint24 fee;
         uint256 vaultFee;
     }
+    
+    struct RangeParams {
+        int24 tickLower;
+        int24 tickUpper;
+    }
 
     function chi(uint256 tokenId)
         external
@@ -66,6 +71,12 @@ interface ICHIManager is ICHIDepositCallBack {
         int24 tickUpper
     ) external;
 
+    function addAndRemoveRanges(
+        uint256 tokenId,
+        RangeParams[] calldata addRanges,
+        RangeParams[] calldata removeRanges
+    ) external ;
+    
     function collectProtocol(
         uint256 tokenId,
         uint256 amount0,
