@@ -29,16 +29,9 @@ describe('CHIManager', () => {
     loadFixture = waffle.createFixtureLoader(wallets)
   })
   beforeEach('load fixture', async () => {
-    ;({
-      uniswapV3Factory,
-      token0,
-      token1,
-      token2,
-      yang,
-      chiVaultDeployer,
-      chi: chiManager,
-      router,
-    } = await loadFixture(allFixture))
+    ;({ uniswapV3Factory, token0, token1, token2, yang, chiVaultDeployer, chi: chiManager, router } = await loadFixture(
+      allFixture
+    ))
   })
 
   async function mint(
@@ -57,14 +50,14 @@ describe('CHIManager', () => {
       token0,
       token1,
       fee,
-      vaultFee,
+      vaultFee
     }
 
     const { tokenId, vault } = await chiManager.connect(caller).callStatic.mint(mintParams)
     await chiManager.connect(caller).mint(mintParams)
     return {
       tokenId: tokenId.toNumber(),
-      vault,
+      vault
     }
   }
   describe('Mint CHI NFT', async () => {
@@ -200,6 +193,41 @@ describe('CHIManager', () => {
         expect(await chivault.getRangeCount()).to.eq(0)
       })
 
+      it('addAndRemoveRanges', async () => {
+        const addParams = [
+          {
+            tickLower: minTick,
+            tickUpper: maxTick
+          },
+          {
+            tickLower: 5 * tickSpacing,
+            tickUpper: 10 * tickSpacing
+          }
+        ]
+
+        await chiManager.addAndRemoveRanges(tokenId1, addParams, [])
+        expect(await chivault.getRangeCount()).to.eq(2)
+        const ticks01 = await chivault.getRange(0)
+        expect(ticks01.tickLower).to.eq(minTick)
+        expect(ticks01.tickUpper).to.eq(maxTick)
+
+        const ticks02 = await chivault.getRange(1)
+        expect(ticks02.tickLower).to.eq(5 * tickSpacing)
+        expect(ticks02.tickUpper).to.eq(10 * tickSpacing)
+
+        const addParams02 = [
+          {
+            tickLower: 10 * tickSpacing,
+            tickUpper: 50 * tickSpacing
+          }
+        ]
+        // add and remove
+        await chiManager.addAndRemoveRanges(tokenId1, addParams02, addParams)
+        expect(await chivault.getRangeCount()).to.eq(1)
+        const ticks03 = await chivault.getRange(0)
+        expect(ticks03.tickLower).to.eq(10 * tickSpacing)
+        expect(ticks03.tickUpper).to.eq(50 * tickSpacing)
+      })
       it('subscribe and unsubscribe', async () => {
         expect(await yang.totallyShares()).to.eq(0)
         expect(await token0.balanceOf(yang.address)).to.eq(tokenAmount0)
@@ -210,7 +238,7 @@ describe('CHIManager', () => {
           amount0Desired: convertTo18Decimals(1000),
           amount1Desired: convertTo18Decimals(1000),
           amount0Min: 0,
-          amount1Min: 0,
+          amount1Min: 0
         }
         await yang.subscribe(subscribeParam)
         expect(await yang.totallyShares()).to.eq(convertTo18Decimals(1000))
@@ -222,7 +250,7 @@ describe('CHIManager', () => {
           chiId: tokenId1,
           shares: await yang.totallyShares(),
           amount0Min: convertTo18Decimals(1000),
-          amount1Min: convertTo18Decimals(1000),
+          amount1Min: convertTo18Decimals(1000)
         }
         await yang.unsubscribe(unsubscribeParam)
         expect(await yang.totallyShares()).to.eq(0)
@@ -237,7 +265,7 @@ describe('CHIManager', () => {
           amount0Desired: convertTo18Decimals(1000),
           amount1Desired: convertTo18Decimals(1000),
           amount0Min: 0,
-          amount1Min: 0,
+          amount1Min: 0
         }
         await yang.subscribe(subscribeParam)
         expect(await token0.balanceOf(yang.address)).to.eq(convertTo18Decimals(9000))
@@ -270,7 +298,7 @@ describe('CHIManager', () => {
           amount0Desired: convertTo18Decimals(1000),
           amount1Desired: convertTo18Decimals(1000),
           amount0Min: 0,
-          amount1Min: 0,
+          amount1Min: 0
         }
         await yang.subscribe(subscribeParam)
         await chiManager.addRange(tokenId1, minTick, maxTick)
@@ -307,7 +335,7 @@ describe('CHIManager', () => {
           amount0Desired: convertTo18Decimals(1000),
           amount1Desired: convertTo18Decimals(1000),
           amount0Min: 0,
-          amount1Min: 0,
+          amount1Min: 0
         }
         await yang.subscribe(subscribeParam)
         await chiManager.addRange(tokenId1, minTick, maxTick)
@@ -325,7 +353,7 @@ describe('CHIManager', () => {
           chiId: tokenId1,
           shares: await yang.totallyShares(),
           amount0Min: 0,
-          amount1Min: 0,
+          amount1Min: 0
         }
         await yang.unsubscribe(unsubscribeParam)
         // 29970029970029 is protocol fee
