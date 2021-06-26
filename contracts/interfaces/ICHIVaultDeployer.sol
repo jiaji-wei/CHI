@@ -17,5 +17,8 @@ interface ICHIVaultDeployer {
     ) external returns (address pool);
 
     event OwnerChanged(address indexed oldOwner, address indexed newOwner);
-    event CHIManagerChanged(address indexed oldCHIManager, address indexed newCHIManager);
+    event CHIManagerChanged(
+        address indexed oldCHIManager,
+        address indexed newCHIManager
+    );
 }

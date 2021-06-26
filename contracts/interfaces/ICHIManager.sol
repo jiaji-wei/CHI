@@ -3,8 +3,8 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
-import './ICHIVault.sol';
-import './ICHIDepositCallBack.sol';
+import "./ICHIVault.sol";
+import "./ICHIDepositCallBack.sol";
 
 interface ICHIManager is ICHIDepositCallBack {
     struct MintParams {
@@ -14,7 +14,7 @@ interface ICHIManager is ICHIDepositCallBack {
         uint24 fee;
         uint256 vaultFee;
     }
-    
+
     struct RangeParams {
         int24 tickLower;
         int24 tickUpper;
@@ -34,7 +34,9 @@ interface ICHIManager is ICHIDepositCallBack {
             uint256 totalShares
         );
 
-    function mint(MintParams calldata params) external returns (uint256 tokenId, address vault);
+    function mint(MintParams calldata params)
+        external
+        returns (uint256 tokenId, address vault);
 
     function subscribe(
         uint256 yangId,
@@ -75,8 +77,8 @@ interface ICHIManager is ICHIDepositCallBack {
         uint256 tokenId,
         RangeParams[] calldata addRanges,
         RangeParams[] calldata removeRanges
-    ) external ;
-    
+    ) external;
+
     function collectProtocol(
         uint256 tokenId,
         uint256 amount0,
@@ -97,7 +99,13 @@ interface ICHIManager is ICHIDepositCallBack {
         uint128 liquidity
     ) external;
 
-    function removeAllLiquidityFromPosition(uint256 tokenId, uint256 rangeIndex) external;
+    function removeAllLiquidityFromPosition(uint256 tokenId, uint256 rangeIndex)
+        external;
 
-    event Create(uint256 tokenId, address pool, address vault, uint256 vaultFee);
+    event Create(
+        uint256 tokenId,
+        address pool,
+        address vault,
+        uint256 vaultFee
+    );
 }

@@ -15,13 +15,19 @@ interface ICHIVault {
     // range
     function getRangeCount() external view returns (uint256);
 
-    function getRange(uint256 index) external view returns (int24 tickLower, int24 tickUpper);
+    function getRange(uint256 index)
+        external
+        view
+        returns (int24 tickLower, int24 tickUpper);
 
     function addRange(int24 _tickLower, int24 _tickUpper) external;
 
     function removeRange(int24 _tickLower, int24 _tickUpper) external;
 
-    function getTotalAmounts() external view returns (uint256 amount0, uint256 amount1);
+    function getTotalAmounts()
+        external
+        view
+        returns (uint256 amount0, uint256 amount1);
 
     function collectProtocol(
         uint256 amount0,
@@ -61,5 +67,7 @@ interface ICHIVault {
         external
         returns (uint256 amount0, uint256 amount1);
 
-    function removeAllLiquidityFromPosition(uint256 rangeIndex) external returns (uint256 amount0, uint256 amount1);
+    function removeAllLiquidityFromPosition(uint256 rangeIndex)
+        external
+        returns (uint256 amount0, uint256 amount1);
 }
