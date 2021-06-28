@@ -52,8 +52,8 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
     // total shares
     uint256 private _totalSupply;
 
-    using EnumerableSet for EnumerableSet.UintSet;
-    EnumerableSet.UintSet private _rangeSet;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    EnumerableSet.Bytes32Set private _rangeSet;
 
     constructor(
         address _pool,
@@ -109,23 +109,20 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         return _rangeSet.length();
     }
 
-    function _encode(int24 num1, int24 num2)
-        internal
-        pure
-        returns (uint256 value)
-    {
-        value =
-            ((uint256(int256(num1)) << 232) >> 104) +
-            ((uint256(int256(num2)) << 232) >> 232);
+    function _encode(int24 _a, int24 _b) internal pure returns (bytes32 x) {
+        assembly {
+            mstore(0x10, _b)
+            mstore(0x0, _a)
+            x := mload(0x10)
+        }
     }
 
-    function _decode(uint256 num)
-        internal
-        pure
-        returns (int24 num1, int24 num2)
-    {
-        num1 = int24(int256(num >> 128));
-        num2 = int24(int256(num << 192) >> 192);
+    function _decode(bytes32 x) internal pure returns (int24 a, int24 b) {
+        assembly {
+            b := x
+            mstore(0x10, x)
+            a := mload(0)
+        }
     }
 
     function getRange(uint256 index)
