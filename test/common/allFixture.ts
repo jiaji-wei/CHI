@@ -4,6 +4,7 @@ import { ethers } from 'hardhat'
 import { constants, Wallet } from 'ethers'
 import { UniswapV3FactoryAddress } from './address'
 import { MockErc20, MockYang, ChiVaultDeployer, ChiManager, MockRouter } from '../../typechain'
+import parseWhiteListMap from './parse-whitelist-map'
 
 interface IUniswapV3FactoryFixture {
   uniswapV3Factory: IUniswapV3Factory
@@ -67,13 +68,14 @@ async function chiManagerFixture(
   vaultDeployerAddress: string,
   wallets: Wallet[]
 ): Promise<ChiManagerFixture> {
+  const info = parseWhiteListMap([wallets[0].address])
   const chiManagerFactory = await ethers.getContractFactory('CHIManager')
   const chi = (await chiManagerFactory.deploy(
     UniswapV3FactoryAddress,
     yangAddress,
     vaultDeployerAddress,
     // default wallet0 is gov
-    wallets[0].address
+    info.merkleRoot
   )) as ChiManager
   return { chi }
 }
