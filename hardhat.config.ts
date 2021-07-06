@@ -37,9 +37,9 @@ const DEFAULT_COMPILER_SETTINGS = {
 module.exports = {
   networks: {
     hardhat: {
-      forking: {
-        url: `${process.env.MAINNET_API_URL}`,
-      },
+      //forking: {
+        //url: `${process.env.MAINNET_API_URL}`,
+      //},
       allowUnlimitedContractSize: false,
       blockGasLimit: 20000000,
       timeout: 120000,
@@ -52,7 +52,7 @@ module.exports = {
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
-     // accounts: [`${process.env.RINKEBY_PRIVATE_KEY}`, ],
+      accounts: [`${process.env.RINKEBY_PRIVATE_KEY}`, ],
     },
   },
   etherscan: {

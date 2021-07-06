@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat';
 
-const YangNFT = '0xbB7F54758979166A34C40788Ed45796b0569aFD9';
-const Governance = '0x5a0350846f321524d0fBe0C6A94027E89bE23bE5';
+const YangNFT = '0xd1309B94DAcA28bc402694a60Aee53089cfff5E5';
+const MerkleRoot = '0xdb45131226a82a3ac77bac89d823bed43d130e9cb50cd0f03c84f6d28264a78f';
 const UniV3Factory = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
 
 
@@ -15,17 +15,19 @@ async function main() {
         UniV3Factory,
         YangNFT,
         CHIDeployer.address,
-        Governance
+        MerkleRoot
     );
     await CHIManager.deployed();
 
     console.log('CHIVaultDeployer:')
-    console.log(CHIDeployer.address) // 0xb5887063F147388Ee24E7632D39EDc6ACE00d38a
+    console.log(CHIDeployer.address) // 0x7eE5DaE59b06F8174D6Fd043dBC7e894b38D4860
     console.log(CHIDeployer.deployTransaction.hash);
 
     console.log('CHIManager')
-    console.log(CHIManager.address) // 0x7A31381D00c2e107716dde41Dbd724240521Dad3
+    console.log(CHIManager.address) // 0x53CcaFA63368BD8D5162e00Ff116c2F6626944A4
     console.log(CHIManager.deployTransaction.hash);
+
+    await CHIDeployer.setCHIManager(CHIManager.address)
 }
 
 main()

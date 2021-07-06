@@ -236,7 +236,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         override
         nonReentrant
         onlyManager
-        returns (uint256 amount0, uint256 amount1)
+        returns (uint256 amount0, uint256 amount1, uint256 unusedAmount0, uint256 unusedAmount1)
     {
         require(shares > 0, "s");
         require(to != address(0) && to != address(this), "to");
@@ -248,8 +248,8 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
 
         // collect fee
         harvestFee();
-        uint256 unusedAmount0 = _balanceToken0().mul(shares).div(_totalSupply);
-        uint256 unusedAmount1 = _balanceToken1().mul(shares).div(_totalSupply);
+        unusedAmount0 = _balanceToken0().mul(shares).div(_totalSupply);
+        unusedAmount1 = _balanceToken1().mul(shares).div(_totalSupply);
         if (unusedAmount0 > 0) token0.safeTransfer(to, unusedAmount0);
         if (unusedAmount1 > 0) token1.safeTransfer(to, unusedAmount1);
 
