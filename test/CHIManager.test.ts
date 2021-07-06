@@ -31,9 +31,16 @@ describe('CHIManager', () => {
     loadFixture = waffle.createFixtureLoader(wallets)
   })
   beforeEach('load fixture', async () => {
-    ;({ uniswapV3Factory, token0, token1, token2, yang, chiVaultDeployer, chi: chiManager, router } = await loadFixture(
-      allFixture
-    ))
+    ;({
+      uniswapV3Factory,
+      token0,
+      token1,
+      token2,
+      yang,
+      chiVaultDeployer,
+      chi: chiManager,
+      router,
+    } = await loadFixture(allFixture))
   })
 
   async function mint(
@@ -43,7 +50,7 @@ describe('CHIManager', () => {
     fee: number,
     vaultFee: number,
     proof: string[],
-    caller: Wallet = gov,
+    caller: Wallet = gov
   ): Promise<{
     tokenId: number
     vault: string
@@ -53,14 +60,14 @@ describe('CHIManager', () => {
       token0,
       token1,
       fee,
-      vaultFee
+      vaultFee,
     }
 
     const { tokenId, vault } = await chiManager.connect(caller).callStatic.mint(mintParams, proof)
     await chiManager.connect(caller).mint(mintParams, proof)
     return {
       tokenId: tokenId.toNumber(),
-      vault
+      vault,
     }
   }
   describe('Mint CHI NFT', async () => {
@@ -68,13 +75,20 @@ describe('CHIManager', () => {
       it('succeeds for mint', async () => {
         // non-existent v3 pool
         const proof = tree.getHexProof(gov.address)
-        await expect(mint(gov.address, token0.address, token1.address, FeeAmount.MEDIUM, vaultFee, proof)).to.be.revertedWith(
-          'Non-existent pool'
-        )
+        await expect(
+          mint(gov.address, token0.address, token1.address, FeeAmount.MEDIUM, vaultFee, proof)
+        ).to.be.revertedWith('Non-existent pool')
         // more than FEE_BASE
         await expect(mint(gov.address, USDCAddress, USDTAddress, FeeAmount.MEDIUM, 1e6, proof)).to.be.revertedWith('f')
 
-        const { tokenId: tokenId1 } = await mint(gov.address, USDCAddress, USDTAddress, FeeAmount.MEDIUM, vaultFee, proof)
+        const { tokenId: tokenId1 } = await mint(
+          gov.address,
+          USDCAddress,
+          USDTAddress,
+          FeeAmount.MEDIUM,
+          vaultFee,
+          proof
+        )
         expect(gov.address).to.eq(await chiManager.ownerOf(tokenId1))
 
         expect(await chiManager.balanceOf(gov.address)).to.eq(1)
@@ -104,8 +118,15 @@ describe('CHIManager', () => {
       })
 
       it('succeeds for approve a operator', async () => {
-        const proof = tree.getHexProof(gov.address);
-        const { tokenId: tokenId1 } = await mint(gov.address, USDCAddress, USDTAddress, FeeAmount.MEDIUM, vaultFee, proof)
+        const proof = tree.getHexProof(gov.address)
+        const { tokenId: tokenId1 } = await mint(
+          gov.address,
+          USDCAddress,
+          USDTAddress,
+          FeeAmount.MEDIUM,
+          vaultFee,
+          proof
+        )
         expect(gov.address).to.eq(await chiManager.ownerOf(tokenId1))
 
         let chi1 = await chiManager.chi(tokenId1)
@@ -165,7 +186,14 @@ describe('CHIManager', () => {
       await router.mint(poolAddress, minTick, maxTick, convertTo18Decimals(1))
 
       const proof = tree.getHexProof(gov.address)
-      const { tokenId, vault } = await mint(gov.address, token0.address, token1.address, FeeAmount.MEDIUM, vaultFee, proof)
+      const { tokenId, vault } = await mint(
+        gov.address,
+        token0.address,
+        token1.address,
+        FeeAmount.MEDIUM,
+        vaultFee,
+        proof
+      )
       tokenId1 = tokenId
       chivault = (await ethers.getContractAt('CHIVault', vault)) as ChiVault
       // deposit to YANG
@@ -175,14 +203,6 @@ describe('CHIManager', () => {
       await yang.deposit(token0.address, tokenAmount0, token1.address, tokenAmount1)
     })
     describe('success cases', () => {
-      it('set gov', async () => {
-        await chiManager.setGovernance(other.address)
-        expect(await chiManager.chigov()).to.eq(gov.address)
-        expect(await chiManager.nextgov()).to.eq(other.address)
-        await chiManager.connect(other).acceptGovernance()
-        expect(await chiManager.chigov()).to.eq(other.address)
-        expect(await chiManager.nextgov()).to.eq(ZeroAddress)
-      })
       it('add and remove range', async () => {
         await chiManager.addRange(tokenId1, minTick, maxTick)
         expect(await chivault.getRangeCount()).to.eq(1)
@@ -205,12 +225,12 @@ describe('CHIManager', () => {
         const addParams = [
           {
             tickLower: minTick,
-            tickUpper: maxTick
+            tickUpper: maxTick,
           },
           {
             tickLower: 5 * tickSpacing,
-            tickUpper: 10 * tickSpacing
-          }
+            tickUpper: 10 * tickSpacing,
+          },
         ]
 
         await chiManager.addAndRemoveRanges(tokenId1, addParams, [])
@@ -226,8 +246,8 @@ describe('CHIManager', () => {
         const addParams02 = [
           {
             tickLower: 10 * tickSpacing,
-            tickUpper: 50 * tickSpacing
-          }
+            tickUpper: 50 * tickSpacing,
+          },
         ]
         // add and remove
         await chiManager.addAndRemoveRanges(tokenId1, addParams02, addParams)
@@ -246,7 +266,7 @@ describe('CHIManager', () => {
           amount0Desired: convertTo18Decimals(1000),
           amount1Desired: convertTo18Decimals(1000),
           amount0Min: 0,
-          amount1Min: 0
+          amount1Min: 0,
         }
         await yang.subscribe(subscribeParam)
         expect(await yang.totallyShares()).to.eq(convertTo18Decimals(1000))
@@ -258,7 +278,7 @@ describe('CHIManager', () => {
           chiId: tokenId1,
           shares: await yang.totallyShares(),
           amount0Min: convertTo18Decimals(1000),
-          amount1Min: convertTo18Decimals(1000)
+          amount1Min: convertTo18Decimals(1000),
         }
         await yang.unsubscribe(unsubscribeParam)
         expect(await yang.totallyShares()).to.eq(0)
@@ -273,7 +293,7 @@ describe('CHIManager', () => {
           amount0Desired: convertTo18Decimals(1000),
           amount1Desired: convertTo18Decimals(1000),
           amount0Min: 0,
-          amount1Min: 0
+          amount1Min: 0,
         }
         await yang.subscribe(subscribeParam)
         expect(await token0.balanceOf(yang.address)).to.eq(convertTo18Decimals(9000))
@@ -306,7 +326,7 @@ describe('CHIManager', () => {
           amount0Desired: convertTo18Decimals(1000),
           amount1Desired: convertTo18Decimals(1000),
           amount0Min: 0,
-          amount1Min: 0
+          amount1Min: 0,
         }
         await yang.subscribe(subscribeParam)
         await chiManager.addRange(tokenId1, minTick, maxTick)
@@ -343,7 +363,7 @@ describe('CHIManager', () => {
           amount0Desired: convertTo18Decimals(1000),
           amount1Desired: convertTo18Decimals(1000),
           amount0Min: 0,
-          amount1Min: 0
+          amount1Min: 0,
         }
         await yang.subscribe(subscribeParam)
         await chiManager.addRange(tokenId1, minTick, maxTick)
@@ -361,7 +381,7 @@ describe('CHIManager', () => {
           chiId: tokenId1,
           shares: await yang.totallyShares(),
           amount0Min: 0,
-          amount1Min: 0
+          amount1Min: 0,
         }
         await yang.unsubscribe(unsubscribeParam)
         // 29970029970029 is protocol fee
