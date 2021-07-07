@@ -53,7 +53,7 @@ contract CHIManager is ICHIManager, ReentrancyGuard, ERC721, Multicall {
         address _yangNFT,
         address _deployer,
         bytes32 _merkleRoot
-    ) ERC721("YIN's Uniswap V3 Positions Manager", "CHI") {
+    ) ERC721("YIN Uniswap V3 Positions Manager", "CHI") {
         manager = msg.sender;
         v3Factory = _v3Factory;
         yangNFT = _yangNFT;
