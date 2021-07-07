@@ -199,7 +199,7 @@ contract CHIManager is ICHIManager, ReentrancyGuard, ERC721, Multicall {
         YANGPosition.Info storage _position = positions[positionKey];
         require(_position.shares >= shares, "s");
         CHIData storage _chi_ = _chi[tokenId];
-        (, , amount0, amount1) = ICHIVault(_chi_.vault).withdraw(
+        (amount0, amount1) = ICHIVault(_chi_.vault).withdraw(
             yangId,
             shares,
             amount0Min,
