@@ -3,6 +3,7 @@ import 'hardhat-typechain'
 import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-etherscan'
+import '@openzeppelin/hardhat-upgrades';
 require('dotenv').config()
 
 // This is a sample Hardhat task. To learn how to create your own go to
