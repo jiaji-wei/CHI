@@ -4,7 +4,6 @@ import '@nomiclabs/hardhat-ethers'
 import '@nomiclabs/hardhat-waffle'
 import '@nomiclabs/hardhat-etherscan'
 import '@openzeppelin/hardhat-upgrades';
-import 'hardhat-contract-sizer'
 
 require('dotenv').config()
 
@@ -55,7 +54,7 @@ module.exports = {
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${process.env.INFURA_API_KEY}`,
-      accounts: [`${process.env.RINKEBY_PRIVATE_KEY}`, ],
+      accounts: [`${process.env.PRIVATE_KEY}`, ],
     },
   },
   etherscan: {
