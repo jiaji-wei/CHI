@@ -127,6 +127,17 @@ contract CHIManager is
         );
     }
 
+    function stateOfCHI(uint256 tokenId)
+        external
+        view
+        override
+        returns (bool isPaused, bool isArchived)
+    {
+        CHIData storage _chi_ = _chi[tokenId];
+        require(_exists(tokenId), "Invalid token ID");
+        (isPaused, isArchived) = ICHIVault(_chi_.vault).stateOfVault();
+    }
+
     function mint(MintParams calldata params, bytes32[] calldata merkleProof)
         external
         override
@@ -319,6 +330,33 @@ contract CHIManager is
     {
         CHIData storage _chi_ = _chi[tokenId];
         ICHIVault(_chi_.vault).removeAllLiquidityFromPosition(rangeIndex);
+    }
+
+    function archive(uint256 tokenId)
+        external
+        override
+        onlyManager
+    {
+        CHIData storage _chi_ = _chi[tokenId];
+        ICHIVault(_chi_.vault).archiveVault();
+    }
+
+    function pause(uint256 tokenId)
+        external
+        override
+        isAuthorizedForToken(tokenId)
+    {
+        CHIData storage _chi_ = _chi[tokenId];
+        ICHIVault(_chi_.vault).pauseVault();
+    }
+
+    function unpause(uint256 tokenId)
+        external
+        override
+        isAuthorizedForToken(tokenId)
+    {
+        CHIData storage _chi_ = _chi[tokenId];
+        ICHIVault(_chi_.vault).unpauseVault();
     }
 
     function tokenURI(uint256 tokenId)

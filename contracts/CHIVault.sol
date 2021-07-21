@@ -13,10 +13,18 @@ import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import "@uniswap/v3-periphery/contracts/libraries/LiquidityAmounts.sol";
 
+import "./base/Archivable.sol";
+import "./base/Pausable.sol";
 import "./interfaces/ICHIManager.sol";
 import "./interfaces/ICHIDepositCallBack.sol";
 
-contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
+contract CHIVault is
+    ICHIVault,
+    IUniswapV3MintCallback,
+    ReentrancyGuard,
+    Pausable,
+    Archivable
+{
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -139,6 +147,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         external
         override
         onlyManager
+        whenNotArchived
     {
         (uint256 amount0, uint256 amount1) = _positionAmounts(
             tickLower,
@@ -154,6 +163,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         external
         override
         onlyManager
+        whenNotArchived
     {
         (uint256 amount0, uint256 amount1) = _positionAmounts(
             tickLower,
@@ -194,6 +204,8 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         override
         nonReentrant
         onlyManager
+        whenNotArchived
+        whenNotPaused
         returns (
             uint256 shares,
             uint256 amount0,
@@ -236,6 +248,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         override
         nonReentrant
         onlyManager
+        whenNotArchived
         returns (uint256 amount0, uint256 amount1)
     {
         require(shares > 0, "s");
@@ -324,7 +337,8 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         }
     }
 
-    function harvestFee() public {
+    function harvestFee() public whenNotArchived
+    {
         uint256 collect0 = 0;
         uint256 collect1 = 0;
         // update pool
@@ -345,7 +359,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         uint256 amount0,
         uint256 amount1,
         address to
-    ) external override onlyManager {
+    ) external override onlyManager whenNotArchived {
         _accruedProtocolFees0 = _accruedProtocolFees0.sub(amount0);
         _accruedProtocolFees1 = _accruedProtocolFees1.sub(amount1);
         if (amount0 > 0) token0.safeTransfer(to, amount0);
@@ -356,7 +370,14 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         uint256 rangeIndex,
         uint256 amount0Desired,
         uint256 amount1Desired
-    ) external override nonReentrant onlyManager {
+    )
+        external
+        override
+        nonReentrant
+        onlyManager
+        whenNotArchived
+        whenNotPaused
+    {
         (int24 _tickLower, int24 _tickUpper) = _decode(
             _rangeSet.at(rangeIndex)
         );
@@ -387,6 +408,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         override
         nonReentrant
         onlyManager
+        whenNotArchived
         returns (uint256 amount0, uint256 amount1)
     {
         (int24 _tickLower, int24 _tickUpper) = _decode(
@@ -415,6 +437,7 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
         override
         nonReentrant
         onlyManager
+        whenNotArchived
         returns (uint256 amount0, uint256 amount1)
     {
         (int24 _tickLower, int24 _tickUpper) = _decode(
@@ -434,6 +457,27 @@ contract CHIVault is ICHIVault, IUniswapV3MintCallback, ReentrancyGuard {
                 );
             }
         }
+    }
+
+    function pauseVault() external override onlyManager whenNotArchived
+    {
+        _pause();
+    }
+
+    function unpauseVault() external override onlyManager whenNotArchived
+    {
+        _unpause();
+    }
+
+    function archiveVault() external override onlyManager
+    {
+        _archive();
+    }
+
+    function stateOfVault() external view override returns (bool isPaused, bool isArchived)
+    {
+        isPaused = paused();
+        isArchived = archived();
     }
 
     function _collet(int24 tickLower, int24 tickUpper)

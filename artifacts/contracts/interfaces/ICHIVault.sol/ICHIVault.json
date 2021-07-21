@@ -71,6 +71,13 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "archiveVault",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "uint256",
@@ -199,6 +206,13 @@
     },
     {
       "inputs": [],
+      "name": "pauseVault",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "protocolFee",
       "outputs": [
         {
@@ -283,6 +297,24 @@
     },
     {
       "inputs": [],
+      "name": "stateOfVault",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "isPaused",
+          "type": "bool"
+        },
+        {
+          "internalType": "bool",
+          "name": "isArchived",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "totalSupply",
       "outputs": [
         {
@@ -292,6 +324,13 @@
         }
       ],
       "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "unpauseVault",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {

@@ -108,4 +108,9 @@ interface ICHIManager is ICHIDepositCallBack {
         address vault,
         uint256 vaultFee
     );
+
+    function stateOfCHI(uint256 tokenId) external returns (bool isPaused, bool isArchived);
+    function archive(uint256 tokenId) external ;
+    function pause(uint256 tokenId) external;
+    function unpause(uint256 tokenId) external;
 }

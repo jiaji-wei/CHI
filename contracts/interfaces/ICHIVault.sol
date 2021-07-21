@@ -70,4 +70,10 @@ interface ICHIVault {
     function removeAllLiquidityFromPosition(uint256 rangeIndex)
         external
         returns (uint256 amount0, uint256 amount1);
+
+    // vault status operation
+    function stateOfVault() external view returns (bool isPaused, bool isArchived);
+    function pauseVault() external;
+    function unpauseVault() external;
+    function archiveVault() external;
 }
