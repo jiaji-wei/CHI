@@ -42,6 +42,8 @@ contract CHIManager is
         address operator;
         address pool;
         address vault;
+        bool paused;
+        bool archived;
     }
 
     /// @dev The token ID data
@@ -151,7 +153,9 @@ contract CHIManager is
         _chi[tokenId] = CHIData({
             operator: params.recipient,
             pool: uniswapPool,
-            vault: vault
+            vault: vault,
+            paused: false,
+            archived: false
         });
 
         emit Create(tokenId, uniswapPool, vault, params.vaultFee);
@@ -177,6 +181,8 @@ contract CHIManager is
         )
     {
         CHIData storage _chi_ = _chi[tokenId];
+        require(!_chi_.paused, 'CHI Paused');
+
         (shares, amount0, amount1) = ICHIVault(_chi_.vault).deposit(
             yangId,
             amount0Desired,
@@ -203,10 +209,12 @@ contract CHIManager is
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
+        CHIData storage _chi_ = _chi[tokenId];
+        require(!_chi_.archived, 'CHI Archived');
+
         bytes32 positionKey = keccak256(abi.encodePacked(yangId, tokenId));
         YANGPosition.Info storage _position = positions[positionKey];
         require(_position.shares >= shares, "s");
-        CHIData storage _chi_ = _chi[tokenId];
         (amount0, amount1) = ICHIVault(_chi_.vault).withdraw(
             yangId,
             shares,
@@ -244,6 +252,8 @@ contract CHIManager is
         int24 tickUpper
     ) external override isAuthorizedForToken(tokenId) {
         CHIData storage _chi_ = _chi[tokenId];
+        require(!_chi_.paused, 'CHI Paused');
+
         ICHIVault(_chi_.vault).addRange(tickLower, tickUpper);
     }
 
@@ -253,6 +263,8 @@ contract CHIManager is
         int24 tickUpper
     ) external override isAuthorizedForToken(tokenId) {
         CHIData storage _chi_ = _chi[tokenId];
+        require(!_chi_.paused, 'CHI Paused');
+
         ICHIVault(_chi_.vault).removeRange(tickLower, tickUpper);
     }
 
@@ -262,6 +274,8 @@ contract CHIManager is
         RangeParams[] calldata removeRanges
     ) external override isAuthorizedForToken(tokenId) {
         CHIData storage _chi_ = _chi[tokenId];
+        require(!_chi_.paused, 'CHI Paused');
+
         for (uint256 i = 0; i < addRanges.length; i++) {
             ICHIVault(_chi_.vault).addRange(
                 addRanges[i].tickLower,
@@ -283,6 +297,8 @@ contract CHIManager is
         address to
     ) external override isAuthorizedForToken(tokenId) {
         CHIData storage _chi_ = _chi[tokenId];
+        require(!_chi_.paused, 'CHI Paused');
+
         ICHIVault(_chi_.vault).collectProtocol(amount0, amount1, to);
     }
 
@@ -293,6 +309,8 @@ contract CHIManager is
         uint256 amount1Desired
     ) external override isAuthorizedForToken(tokenId) {
         CHIData storage _chi_ = _chi[tokenId];
+        require(!_chi_.paused, 'CHI Paused');
+
         ICHIVault(_chi_.vault).addLiquidityToPosition(
             rangeIndex,
             amount0Desired,
@@ -306,6 +324,8 @@ contract CHIManager is
         uint128 liquidity
     ) external override isAuthorizedForToken(tokenId) {
         CHIData storage _chi_ = _chi[tokenId];
+        require(!_chi_.archived, 'CHI Archived');
+
         ICHIVault(_chi_.vault).removeLiquidityFromPosition(
             rangeIndex,
             liquidity
@@ -318,7 +338,38 @@ contract CHIManager is
         isAuthorizedForToken(tokenId)
     {
         CHIData storage _chi_ = _chi[tokenId];
+        require(!_chi_.archived, 'CHI Archived');
+
         ICHIVault(_chi_.vault).removeAllLiquidityFromPosition(rangeIndex);
+    }
+
+    function stateOfCHI(uint256 tokenId) external view override returns (bool isPaused, bool isArchived)
+    {
+        CHIData storage _chi_ = _chi[tokenId];
+        isPaused = _chi_.paused;
+        isArchived = _chi_.archived;
+    }
+
+    function pausedCHI(uint256 tokenId) external override
+    {
+        CHIData storage _chi_ = _chi[tokenId];
+        require(_isApprovedOrOwner(msg.sender, tokenId) || msg.sender == manager, 'Not approved');
+        _chi_.paused = true;
+    }
+
+    function unpausedCHI(uint256 tokenId) external override
+    {
+        CHIData storage _chi_ = _chi[tokenId];
+        require(_isApprovedOrOwner(msg.sender, tokenId) || msg.sender == manager, 'Not approved');
+        require(!_chi_.archived, 'CHI archived');
+        _chi_.paused = false;
+    }
+
+    function archivedCHI(uint256 tokenId) external override isAuthorizedForToken(tokenId)
+    {
+        CHIData storage _chi_ = _chi[tokenId];
+        require(_chi_.paused, 'CHI not paused');
+        _chi_.archived = true;
     }
 
     function tokenURI(uint256 tokenId)
